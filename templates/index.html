@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ta Te Ti</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-image: url('../static/fondo.svg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: rgba(0, 0, 0, 0.45);
+      padding: 2rem;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      text-align: center;
+      max-width: 440px;
+      width: 90%;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+      letter-spacing: 2px;
+    }
+
+    .turno {
+      margin: 1rem 0;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ffeaa7;
+    }
+
+    .tablero {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 1.5rem 0;
+    }
+
+    .celda {
+      width: 100px;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .celda:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
+    }
+
+    .celda.ocupada {
+      cursor: default;
+    }
+
+    .celda.ocupada:hover {
+      transform: none;
+    }
+
+    .btn {
+      margin-top: 1.5rem;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #6a3093, #a0449e);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .mensaje {
+      margin-top: 1rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      min-height: 1.5rem;
+      color: #55efc4;
+    }
+
+    @media (max-width: 480px) {
+      .celda { width: 80px; height: 80px; font-size: 2rem; }
+      h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+    <h1>TA TE TI</h1>
+    <div class="turno" id="turno">Turno: <span id="jugador">X</span></div>
+
+    <div class="tablero" id="tablero">
+      <div class="celda" data-pos="0"></div>
+      <div class="celda" data-pos="1"></div>
+      <div class="celda" data-pos="2"></div>
+      <div class="celda" data-pos="3"></div>
+      <div class="celda" data-pos="4"></div>
+      <div class="celda" data-pos="5"></div>
+      <div class="celda" data-pos="6"></div>
+      <div class="celda" data-pos="7"></div>
+      <div class="celda" data-pos="8"></div>
+    </div>
+
+    <div class="mensaje" id="mensaje"></div>
+
+    <button class="btn" id="reiniciar">Jugar de nuevo</button>
+  </div>
+
+  <script>
+    const celdas = document.querySelectorAll('.celda');
+    const btnReiniciar = document.getElementById('reiniciar');
+    const textoTurno = document.getElementById('jugador');
+    const mensaje = document.getElementById('mensaje');
+
+    let tablero = ['', '', '', '', '', '', '', '', ''];
+    let turnoActual = 'X';
+    let juegoActivo = true;
+
+    const condicionesGanador = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // filas
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columnas
+      [0, 4, 8], [2, 4, 6]             // diagonales
+    ];
+
+    function manejarClic(e) {
+      const celda = e.target;
+      const pos = celda.getAttribute('data-pos');
+
+      if (tablero[pos] !== '' || !juegoActivo) return;
+
+      tablero[pos] = turnoActual;
+      celda.textContent = turnoActual;
+      celda.classList.add('ocupada');
+
+      if (revisarGanador()) {
+        mensaje.textContent = `¡Ganó el jugador ${turnoActual}! 🎉`;
+        mensaje.style.color = '#ff6b6b';
+        juegoActivo = false;
+        return;
+      }
+
+      if (!tablero.includes('')) {
+        mensaje.textContent = '¡Empate! 🤝';
+        mensaje.style.color = '#ffeaa7';
+        juegoActivo = false;
+        return;
+      }
+
+      turnoActual = turnoActual === 'X' ? 'O' : 'X';
+      textoTurno.textContent = turnoActual;
+    }
+
+    function revisarGanador() {
+      return condicionesGanador.some(combo => {
+        const [a, b, c] = combo;
+        return tablero[a] !== '' &&
+               tablero[a] === tablero[b] &&
+               tablero[a] === tablero[c];
+      });
+    }
+
+    function reiniciar() {
+      tablero = ['', '', '', '', '', '', '', '', ''];
+      turnoActual = 'X';
+      juegoActivo = true;
+      textoTurno.textContent = 'X';
+      mensaje.textContent = '';
+      celdas.forEach(celda => {
+        celda.textContent = '';
+        celda.classList.remove('ocupada');
+      });
+    }
+
+    celdas.forEach(celda => celda.addEventListener('click', manejarClic));
+    btnReiniciar.addEventListener('click', reiniciar);
+  </script>
+
+</body>
+</html>
